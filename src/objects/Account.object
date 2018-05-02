@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fields>
+        <fullName>AccountIntegrationId__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Account Integration Id (concatena 11 digitos del Customer Integration Id y 5 del Billing Integration Id)</description>
+        <externalId>true</externalId>
+        <inlineHelpText>Account Integration Id (concatena 11 digitos del Customer Integration Id y 5 del Billing Integration Id)</inlineHelpText>
+        <label>Account Integration Id</label>
+        <length>255</length>
+        <required>false</required>
+        <trackFeedHistory>false</trackFeedHistory>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+</CustomObject>

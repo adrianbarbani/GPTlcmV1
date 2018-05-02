@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value><!-- Branch Management Permission --></value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value><!-- Branch Management Permission --></value>
+    </caseValues>
+    <fields>
+        <label><!-- Allow Deployments --></label>
+        <name>Allow_Deployments__c</name>
+    </fields>
+    <fields>
+        <label><!-- Environment --></label>
+        <name>Environment__c</name>
+        <relationshipLabel><!-- Branch Management Permissions --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- User --></label>
+        <name>User__c</name>
+        <relationshipLabel><!-- Branch Management Permissisions --></relationshipLabel>
+    </fields>
+    <gender><!-- Feminine --></gender>
+    <layouts>
+        <layout>Branch Management Permission Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+    </layouts>
+    <nameFieldLabel><!-- Branch Management Permission Ref --></nameFieldLabel>
+</CustomObjectTranslation>

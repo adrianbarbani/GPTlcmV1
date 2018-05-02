@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Compliance Finding</value>
+    </caseValues>
+    <caseValues>
+        <plural>true</plural>
+        <value>Compliance Findings</value>
+    </caseValues>
+    <fields>
+        <label><!-- Compliance Rule --></label>
+        <name>Compliance_Rule__c</name>
+        <relationshipLabel><!-- Compliance Findings --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Compliance Scan Result --></label>
+        <name>Compliance_Scan_Result__c</name>
+        <relationshipLabel><!-- Compliance Findings --></relationshipLabel>
+    </fields>
+    <fields>
+        <label><!-- Severity --></label>
+        <name>Severity__c</name>
+    </fields>
+    <layouts>
+        <layout>Compliance Finding Layout</layout>
+        <sections>
+            <label><!-- Custom Links --></label>
+            <section>Custom Links</section>
+        </sections>
+        <sections>
+            <label><!-- Summary --></label>
+            <section>Summary</section>
+        </sections>
+    </layouts>
+    <recordTypes>
+        <label><!-- Copado --></label>
+        <name>Copado</name>
+    </recordTypes>
+    <recordTypes>
+        <label><!-- Other --></label>
+        <name>Other</name>
+    </recordTypes>
+    <startsWith>Consonant</startsWith>
+</CustomObjectTranslation>

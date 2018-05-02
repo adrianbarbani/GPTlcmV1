@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <defaultLandingTab>DataRaptor</defaultLandingTab>
+    <formFactors>Large</formFactors>
+    <label>Vlocity DataRaptor</label>
+    <logo>VlocityResources/VlocityLogo.png</logo>
+    <tab>DataRaptor</tab>
+    <tab>Contact_Motive__c</tab>
+    <tab>Location__c</tab>
+    <tab>Case_Resolution_Time__c</tab>
+    <tab>Case_Channel_Configuration__c</tab>
+    <tab>ObjectClass__c</tab>
+    <tab>ObjectLayout__c</tab>
+    <tab>AttributeAssignment__c</tab>
+    <tab>BusinessSite__c</tab>
+    <tab>PromotionItem__c</tab>
+    <tab>PricingElement__c</tab>
+    <tab>DecompositionRelationship__c</tab>
+    <tab>PriceList__c</tab>
+    <tab>PriceListEntry__c</tab>
+    <tab>Datastore__c</tab>
+    <tab>Crossobject__c</tab>
+    <tab>VlocityTrackingEntry__c</tab>
+    <tab>Transaction_History__c</tab>
+    <tab>ReglasGestorPuntos</tab>
+    <tab>FinancialPromotion__c</tab>
+    <tab>GP_Atributo_de_una_transaccion__c</tab>
+    <tab>GP_Socio__c</tab>
+    <tab>Work_Team_Permission__c</tab>
+    <tab>InboundRESTInterface__c</tab>
+    <tab>DRAsset__c</tab>
+    <tab>Work_Team_Management</tab>
+    <tab>Address2__c</tab>
+    <tab>ManageMyWorkTeams</tab>
+    <tab>ManageCrossTeamMembers</tab>
+    <tab>SyncDeltaObject__c</tab>
+    <tab>Mantenimiento_de_Eventos</tab>
+    <tab>GP_Evento_General__c</tab>
+    <tab>Permissions_by_workteam</tab>
+</CustomApplication>
