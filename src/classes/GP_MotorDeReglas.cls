@@ -11,27 +11,30 @@ Global with sharing class GP_MotorDeReglas {
         //Traigo todas las reglas activas para ese tipo de evento
         List<GP_Regla__c> reglasActivas = [select id, Valor_resultado_fijo__c, Tipo_de_evento__c, Fecha_vencimiento__c, SeComparaContraElValorFijo__c,
                                            Vencimiento_fecha_fija__c, Dias_vencimiento__c, Operador_calculo__c, Variable_calculo__c, Valor_calculo__c,
-                                           (select id, Operador__c, Valor_entero__c, Valor_Booleano__c, Valor_contra_el_que_se_compara__c, Variable_a_comparar__c
+                                           (select id, Operador__c, valor_string__c, Valor_entero__c, Valor_Booleano__c, Valor_contra_el_que_se_compara__c, Variable_a_comparar__c
                                            from Condicionales_logicos__r) 
                                            from GP_Regla__c where Tipo_de_evento__c in: tiposDeEvento and activa__c = true];
 
+        system.debug(reglasActivas);
+        
         Map<String, List<GP_Regla__c>> reglasActivasPorEvento = new Map<String, List<GP_Regla__c>>();
         for(GP_Regla__c regla: reglasActivas){
 
-            List<GP_Regla__c> listaAGuardar = reglasActivasPorEvento.get(regla.Tipo_de_evento__c);
+            List<GP_Regla__c> listaAGuardar = reglasActivasPorEvento.get(regla.Tipo_de_evento__c.toUpperCase());
             
             if(listaAGuardar == null){
                 listaAGuardar = new List<GP_Regla__c>();
                 listaAGuardar.add(regla);
-                reglasActivasPorEvento.put(regla.Tipo_de_evento__c, listaAGuardar);
+                reglasActivasPorEvento.put(regla.Tipo_de_evento__c.toUpperCase(), listaAGuardar);
             }else{
                 listaAGuardar.add(regla);
             }
         }
 
         for(GP_itemMotorDeReglas item: items){
-            if(item.tipoDeEvento != 'Canje') {
-                WppPuntos wppResultado = calcularPuntosASumar(item.tipoDeEvento, item.variablesDelEvento, reglasActivasPorEvento.get(item.tipoDeEvento));  
+            if( !item.tipoDeEvento.equalsIgnoreCase('Canje') ) {
+                WppPuntos wppResultado = calcularPuntosASumar(item.tipoDeEvento, item.variablesDelEvento, reglasActivasPorEvento.get(item.tipoDeEvento.toUpperCase()));  
+                system.debug(wppResultado);
                 item.puntos = wppResultado.puntos;
                 item.idRegla = wppResultado.idRegla;
                 item.vencimiento = wppResultado.vencimiento;
@@ -43,7 +46,11 @@ Global with sharing class GP_MotorDeReglas {
 
     private static WppPuntos calcularPuntosASumar(String tipoDeEvento, List<GP_AtributoValorDeUnEvento> variablesDelEvento, List<GP_Regla__c> reglasActivas){
 
-
+        if(reglasActivas == null){
+            reglasActivas = new List<GP_Regla__c>();
+            system.debug('no hay reglas para el evento: '+tipoDeEvento);
+        }
+        
         //Conseguir todas las variables de ese tipo de evento.
         Map<String, GP_AtributoValorDeUnEvento> mapaNombreAtributo = new Map<String, GP_AtributoValorDeUnEvento>(); 
         for(GP_AtributoValorDeUnEvento atr: variablesDelEvento){
@@ -59,6 +66,7 @@ Global with sharing class GP_MotorDeReglas {
             Boolean seCumplenLasCondiciones = true;
             //Por cada regla evaluo que sus condiciones se cumplan, 
             //deben de cumplirse todas las condiciones para considerar que se cumplio una regla.
+            system.debug(regla.Condicionales_logicos__r);
             for(GP_Condicional_logico__c condicion: regla.Condicionales_logicos__r){
                 
                 //consigo el valor de la variable a comparar.
@@ -71,6 +79,9 @@ Global with sharing class GP_MotorDeReglas {
                     }
 
                     //veo si se cumple la condicion.
+                    system.debug(condicion);
+                    system.debug(atributo);
+                    system.debug(comparar(condicion, atributo));
                     if(!comparar(condicion, atributo)){
                         //Si una de las condiciones ya no cumple, salimos del for seteando que no se cumplen las condiciones.
                         seCumplenLasCondiciones = false;
@@ -98,6 +109,11 @@ Global with sharing class GP_MotorDeReglas {
                     }
                 //Si el resultado es variable
                 }else{
+                    
+                    if( mapaNombreAtributo.get(regla.Variable_calculo__c.toLowerCase()) == null ){
+                        throw new GP_APIException('Error: No existe la variable con nombre '+regla.Variable_calculo__c);
+                    }
+                    
                     Double puntosVariables = obtenerPuntosDeResultadoVariable( mapaNombreAtributo.get(regla.Variable_calculo__c.toLowerCase()) , 
                                                                             regla.Operador_calculo__c, Integer.valueOf(regla.Valor_calculo__c));
 
@@ -122,7 +138,11 @@ Global with sharing class GP_MotorDeReglas {
         
         Boolean resultado = false;
         if(atributo.tipo == 'STRING'){
-            resultado = compararSegunOperador(condicion.Valor_contra_el_que_se_compara__c, condicion.Operador__c, atributo.valorString);
+            if(condicion.valor_string__c == null){
+                resultado = compararSegunOperador(condicion.Valor_contra_el_que_se_compara__c, condicion.Operador__c, atributo.valorString);
+            }else{
+                resultado = compararSegunOperador(condicion.valor_string__c, condicion.Operador__c, atributo.valorString);
+            }
         }
         
         if(atributo.tipo == 'BOOLEAN'){
@@ -130,6 +150,12 @@ Global with sharing class GP_MotorDeReglas {
         }
         
         if(atributo.tipo == 'INTEGER'){
+            system.debug('entre a integer');
+            
+            system.debug(condicion.Valor_entero__c);
+            system.debug(condicion.Operador__c);
+            system.debug(atributo.valorNumerico);
+            
             resultado = compararSegunOperador(condicion.Valor_entero__c, condicion.Operador__c, atributo.valorNumerico);
         }
 
@@ -147,19 +173,19 @@ Global with sharing class GP_MotorDeReglas {
         }
         
         if(operador == '>'){
-            return (valorAComparar > valor);
+            return (valor > valorAComparar);
         }
 
         if(operador == '<'){
-            return (valorAComparar < valor);
+            return (valor < valorAComparar);
         }
         
         if(operador == '>='){
-            return (valorAComparar > valor || valorAComparar == valor );
+            return (valor > valorAComparar || valorAComparar == valor );
         }
         
         if(operador == '<='){
-            return (valorAComparar > valor || valorAComparar != valor );
+            return (valor < valorAComparar || valorAComparar == valor );
         }
 
         return false;
@@ -204,6 +230,7 @@ Global with sharing class GP_MotorDeReglas {
 
     private static Double obtenerPuntosDeResultadoVariable(GP_AtributoValorDeUnEvento atributoValor, String operador, Integer valor){
         
+        system.debug(atributoValor);
         if(atributoValor.tipo != 'Integer'){
             throw new GP_APIException('Error atributo '+atributoValor.variable+': El atributo debe ser de tipo numerico');
         }

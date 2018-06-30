@@ -487,6 +487,1121 @@ public with sharing class Gp_AdapterTest {
         System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
     }
     
+    static testMethod void RestoPuntosPorEventoCanje(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Canje';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = true;
+
+        insert regla;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'puntos');
+        mapaDeAtributo.put('tipo', 'Integer');
+        mapaDeAtributo.put('valorInteger', 0);
+        
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Canje');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+    }
+    
+    static testMethod void siLaReglaNoCumpleNoSumaPuntos(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = true;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '!=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(0, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(0, [select id from GP_Historia_transaccion__c].size());
+    }
+    
+    static testMethod void siLaReglaCumpleSumaPuntosCalculados(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        //atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '+';
+        regla.Valor_calculo__c = 20;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(250,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(250, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void siLaReglaCumpleRestaPuntosCalculados(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        //atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '-';
+        regla.Valor_calculo__c = 20;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(210,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(210, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void siLaReglaCumpleMultiplicoPuntosCalculados(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        //atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '*';
+        regla.Valor_calculo__c = 10;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(2300,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(2300, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void siLaReglaCumpleDividoPuntosCalculados(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        //atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '/';
+        regla.Valor_calculo__c = 10;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(23,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(23, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void siLaReglaCumpleHagoElPorcentajePuntosCalculados(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        //atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_contra_el_que_se_compara__c = 'DNI';
+        condicional.Variable_a_comparar__c = 'Tipo De Cliente';
+        condicional.Variable_contra_la_que_se_compara__c = 'Tipo De Cliente';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosInteger(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '>';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 20;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosIntegerMenor(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '<';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 249;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosIntegerIgual(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 230;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosIntegerMayorIgual(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '>=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 230;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosIntegerMenorIgual(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '<=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 230;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
+    static testMethod void prueboLaReglaConAtributosIntegerDistinto(){
+        
+        Account cuenta = new Account();
+        cuenta.name = 'cuenta1';
+        cuenta.recordTypeId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('Consumer').getRecordTypeId();
+        cuenta.AccountIntegrationId__c = '1111111111111111';
+        insert cuenta;
+        
+        GP_Socio__c socio = new GP_Socio__c();
+        socio.cuenta__c = cuenta.id;
+        socio.activo__c = true;
+        socio.Saldo_total__c = 0;
+        insert socio;
+
+
+        List<GP_AtributoValorDeUnEvento> atributos = new List<GP_AtributoValorDeUnEvento>();
+        atributos.add(new GP_AtributoValorDeUnEvento('Tipo De Cliente', 'String', 'DNI'));
+        atributos.add(new GP_AtributoValorDeUnEvento('Monto', 'Integer', 230));
+        
+
+        GP_Regla__c regla = new GP_Regla__c();
+        regla.Fecha_vencimiento__c = Date.today().addDays(2);
+        regla.Tipo_de_evento__c = 'Bienvenida';
+        regla.Valor_resultado_fijo__c = 10;
+        regla.Vigencia_desde__c = Date.today().addDays(-1);
+        regla.Vigencia_hasta__c = Date.today().addDays(2);
+        regla.vencimiento_fecha_fija__c = true;
+        regla.SeComparaContraElValorFijo__c = false;
+        regla.Variable_calculo__c = 'Monto';
+        regla.Operador_calculo__c = '%';
+        regla.Valor_calculo__c = 50;
+
+        insert regla;
+
+        GP_Condicional_logico__c condicional = new GP_Condicional_logico__c();
+        condicional.Operador__c = '!=';
+        condicional.Regla__c = regla.id;
+        condicional.Valor_entero__c = 210;
+        condicional.Variable_a_comparar__c = 'Monto';
+        condicional.Variable_contra_la_que_se_compara__c = 'Monto';
+
+        insert condicional;
+
+
+        //Armado del mapa.
+        
+        map<String,Object> mapaDeAtributo = new Map<String, Object>();
+        mapaDeAtributo.put('variable', 'Tipo De Cliente');
+        mapaDeAtributo.put('tipo', 'String');
+        mapaDeAtributo.put('valorString', 'DNI');
+        
+        
+        map<String,Object> mapaDeAtributo2 = new Map<String, Object>();
+        mapaDeAtributo2.put('variable', 'Monto');
+        mapaDeAtributo2.put('tipo', 'Integer');
+        mapaDeAtributo2.put('valorInteger', 230);
+        
+        List<Object> atributoDeEventoLista = new List<Object>();
+        atributoDeEventoLista.add(mapaDeAtributo);
+        atributoDeEventoLista.add(mapaDeAtributo2);
+        
+        Map<String,Object> primerMapa = new Map<String,object>();
+        primerMapa.put('titularID', cuenta.id);
+        primerMapa.put('suscriptorID', '0');
+        primerMapa.put('tipoDeEvento', 'Bienvenida');
+        primerMapa.put('numeroDeOrden', 111);
+        primerMapa.put('atributosEvento', atributoDeEventoLista);
+        
+        List<Object> listaAux = new List<Object>();
+        listaAux.add(primerMapa);
+        
+        Map<String,Object> input = new Map<String,Object>();
+        input.put('sumarRestarPuntos', listaAux);
+        
+        gp_adapter clase = new gp_adapter();
+        clase.invokeMethod('sumarRestarPuntos', input, new Map<String,Object>(), new Map<String,Object>() );
+        
+        //==================================================
+        
+        System.assertEquals(1, [select id from gp_socio__c].size());
+        
+        system.debug([select id, puntos__c from GP_Saldo_por_vencimiento__c]);
+
+        System.assertEquals(115,[select id, puntos__c from GP_Saldo_por_vencimiento__c where socio__r.id_gp__c =: cuenta.id+'0'].puntos__c);
+        System.assertEquals(115, [select id, saldo_total__c from GP_Socio__c where id_gp__c =: cuenta.id+'0'].saldo_total__c);
+        System.assertEquals(1, [select id from GP_Historia_transaccion__c].size());
+        System.assertEquals(regla.id,[select id, Generado_por__c from GP_Historia_transaccion__c where socio__r.id_gp__c =: cuenta.id+'0'].Generado_por__c);  
+    }
+    
     //consultarTransacciones
     
     static testMethod void consultoLasTransacciones(){

@@ -40,7 +40,7 @@ Global with sharing class GP_API {
 
         update sociosAUpdatear;
         
-        system.debug(sociosACrear);
+        //system.debug(sociosACrear);
         crearSocios(sociosACrear);
         generarAssets(socios);
 
@@ -286,14 +286,14 @@ Global with sharing class GP_API {
 
         List<GP_Socio__c> socios = [select id, Id_GP__c from Gp_socio__c where Id_GP__c in: idsGpMerge];
 
-        system.debug(socios);
+        //system.debug(socios);
         
         Map<String, String> idsGPPorSocio = new Map<String,String>();
         for(GP_Socio__c socio: socios){
             idsGPPorSocio.put(socio.Id_GP__c, socio.id);
         }
         
-        system.debug(idsGPPorSocio);
+        //system.debug(idsGPPorSocio);
         
         List<GP_Lista_de_Asset__c> assetsGpAInsertar = new List<GP_Lista_de_Asset__c> ();
         for(GP_socioAAdherir socio: sociosAAdherir){
@@ -308,7 +308,7 @@ Global with sharing class GP_API {
             }
         }
         
-        system.debug(assetsGpAInsertar);
+        //system.debug(assetsGpAInsertar);
         
         if(assetsGpAInsertar.size()>0){
             insert assetsGpAInsertar;  
@@ -394,7 +394,9 @@ Global with sharing class GP_API {
          
         //Creo los items.
         List<GP_itemMotorDeReglas> itemsMotorRegla = new List<GP_itemMotorDeReglas>();
-        For(GP_sumarRestarPuntosItem item: items){
+        List<GP_sumarRestarPuntosItem> itemsFiltradosPorControlDeEvento = GP_ControlDeEventos.controlarSocios(items);
+        //Saque Items.
+        For(GP_sumarRestarPuntosItem item: itemsFiltradosPorControlDeEvento){
             GP_itemMotorDeReglas itemMR = new GP_itemMotorDeReglas(item.titularID, item.suscriptorID, item.puntos, item.tipoDeEvento, item.variablesDelEvento, item.numeroDeOrden);
             itemsMotorRegla.add(itemMR);
         }
@@ -402,7 +404,7 @@ Global with sharing class GP_API {
         //Los paso por las reglas.
         //System.debug(itemsMotorRegla);
         GP_MotorDeReglas.pasarPorLasReglas(itemsMotorRegla);
-        //system.debug(itemsMotorRegla);
+        system.debug(itemsMotorRegla);
 
         //creo los items para el generador de transacciones.
         List<GP_datosTransaccion> itemsTransaccion = new List<GP_datosTransaccion>();
@@ -496,6 +498,7 @@ Global with sharing class GP_API {
         List<GP_Historia_transaccion__c> transaccionesDeBajaACargar = new list<GP_Historia_transaccion__c>();
         for(GP_Socio__c socio:sociosYaExistente){
             socio.activo__c = false;
+            socio.Saldo_total__c = 0;
             //Transaccion de quita de puntos para cada socio.
             transaccionesDeBajaACargar.add(new GP_Historia_transaccion__c(Socio__c = socio.Id, 
                                          Puntos__c = socio.Saldo_total__c, 
@@ -542,15 +545,20 @@ Global with sharing class GP_API {
 
         //Consumo de puntos socio desde
         List<GP_datosTransaccion> datosSocioDesde = new List<GP_datosTransaccion>();
+        system.debug(puntos);
+        system.debug(new GP_datosTransaccion(null, unTitularId, suscriptorIDDesde, puntos, 'Resta', 'Transferencia', null, null));
         datosSocioDesde.add(new GP_datosTransaccion(null, unTitularId, suscriptorIDDesde, puntos, 'Resta', 'Transferencia', null, null));
 
         List<GP_Historia_transaccion__c> transaccionesGeneradas = GP_Saldos_Transacciones.generarTransaccionActualizarSaldo(datosSocioDesde);
-
+        
+        system.debug(transaccionesGeneradas);
+        
         //Acreditacion de puntos socio hacia
         List<GP_datosTransaccion> datosSocioHacia = new List<GP_datosTransaccion>();
         //Falta definir la fecha de vencimiento.
-        system.debug(transaccionesGeneradas); 
+        //system.debug(transaccionesGeneradas); 
         for(GP_Historia_transaccion__c tran:transaccionesGeneradas){
+            system.debug((Double) tran.Puntos__c);
             datosSocioHacia.add(new GP_datosTransaccion(null, unTitularId, suscriptorIDHacia, (Double) tran.Puntos__c, 'Suma', 'Transferencia', null, tran.vencimiento__c));
         }
 

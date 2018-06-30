@@ -20,7 +20,7 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Json_attribute__c</field>
+                <field>Descripcion__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>

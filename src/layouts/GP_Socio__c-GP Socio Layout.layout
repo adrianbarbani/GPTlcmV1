@@ -83,6 +83,8 @@
     </relatedLists>
     <relatedLists>
         <fields>NAME</fields>
+        <fields>Puntos__c</fields>
+        <fields>Vencimiento__c</fields>
         <relatedList>GP_Saldo_por_vencimiento__c.Socio__c</relatedList>
     </relatedLists>
     <relatedLists>

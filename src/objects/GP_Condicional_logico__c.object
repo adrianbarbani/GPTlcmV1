@@ -53,6 +53,18 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <fields>
+        <fullName>Atributo_de_evento__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <externalId>false</externalId>
+        <label>Atributo de evento</label>
+        <referenceTo>GP_Atributo_de_evento__c</referenceTo>
+        <relationshipLabel>Condicionales logicos</relationshipLabel>
+        <relationshipName>Condicionales_logicos</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
         <fullName>Operador__c</fullName>
         <externalId>false</externalId>
         <label>Operador</label>
@@ -331,6 +343,16 @@
         <unique>false</unique>
     </fields>
     <fields>
+        <fullName>Valor_string__c</fullName>
+        <externalId>false</externalId>
+        <label>Valor string</label>
+        <length>255</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
         <fullName>Variable_a_comparar__c</fullName>
         <externalId>false</externalId>
         <label>Variable a comparar</label>
@@ -372,7 +394,7 @@
         <description>Variable contra la que se compara</description>
         <externalId>false</externalId>
         <label>Variable contra la que se compara</label>
-        <length>50</length>
+        <length>100</length>
         <required>false</required>
         <trackTrending>false</trackTrending>
         <type>Text</type>

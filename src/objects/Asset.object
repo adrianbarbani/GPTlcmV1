@@ -22,4 +22,15 @@
         <type>Text</type>
         <unique>false</unique>
     </fields>
+    <fields>
+        <fullName>Tipo_de_Producto__c</fullName>
+        <externalId>false</externalId>
+        <formula>TEXT( Product2.vlocity_cmt__Type__c )</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Tipo de Producto</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
 </CustomObject>

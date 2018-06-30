@@ -52,13 +52,13 @@ public with sharing class GP_AtributoValorDeUnEvento {
     }
 
     public void validarValor(Boolean var){
-        if(var!= null){
+        if(var == null){
             throw new GP_APIException('El valor de la variable es obligatorio');
         }
     }
 
     public void validarValor(Integer var){
-        if(var != null){
+        if(var == null){
             throw new GP_APIException('El valor de la variable es obligatorio');
         }
     }

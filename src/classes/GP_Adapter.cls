@@ -168,23 +168,30 @@ global with sharing class GP_Adapter implements vlocity_cmt.VlocityOpenInterface
     }
 
     public void eliminarAcumuladores(Map<String, Object> input) { 
+        
+        system.debug(input);
+        
         List<Object> listaDeMapas = (List<Object>) input.get('datosSocio');
         
         List<String> mergeIDs = new List<String>();
         for(Object mapa: listaDeMapas){
+
             Map<String,Object> mapaAux = (Map<String,object>) mapa;
             String titular = (String) mapaAux.get('titularID');
+            system.debug(titular);
             String suscriptor = (String) mapaAux.get('suscriptorID');
+            system.debug(suscriptor);
             
-            if(!String.isBlank(titular) && !String.isBlank(suscriptor)){
-                mergeIDs.add(titular+suscriptor);
-            }else{
-                if(!String.isBlank(titular)){
-                    mergeIds.add(titular);
-                }else{
+            if(String.isBlank(titular)){
                     throw new GP_APIException('El campo titular es obligatorio');
-                }
             }
+            
+            if(suscriptor == '0' || string.isBlank(suscriptor)){
+                    mergeIDs.add(titular+'0');    
+            }else{
+                    mergeIDs.add(suscriptor+titular);
+            }
+
         }
 
         GP_API.eliminarAcumuladores(mergeIds);
