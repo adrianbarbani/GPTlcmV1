@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSetTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <valueTranslation>
+        <masterLabel>ApexClass</masterLabel>
+        <translation><!-- ApexClass --></translation>
+    </valueTranslation>
+    <valueTranslation>
+        <masterLabel>ApexComponent</masterLabel>
+        <translation><!-- ApexComponent --></translation>
+    </valueTranslation>
+    <valueTranslation>
+        <masterLabel>ApexPage</masterLabel>
+        <translation><!-- ApexPage --></translation>
+    </valueTranslation>
+    <valueTranslation>
+        <masterLabel>ApexTrigger</masterLabel>
+        <translation><!-- ApexTrigger --></translation>
+    </valueTranslation>
+    <valueTranslation>
+        <masterLabel>Layout</masterLabel>
+        <translation><!-- Layout --></translation>
+    </valueTranslation>
+</GlobalValueSetTranslation>
